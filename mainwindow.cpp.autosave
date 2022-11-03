@@ -103,21 +103,12 @@ void MainWindow::on_pushButton_3_clicked()
     upper_bound =str.toDouble();
     Mat g_srcImage, g_srcGrayImage, g_dstImage;
     Mat g_cannyDetectedEdges;
-    int g_cannyLowThreshold = 1;// TrackBar позиционный параметр
     g_srcImage = imread(path);
     g_dstImage.create(g_srcImage.size(), g_srcImage.type());
     cvtColor(g_srcImage, g_srcGrayImage, COLOR_BGRA2GRAY);
-
-    // Сначала используем ядро ​​3x3 для уменьшения шума
     blur(g_srcGrayImage, g_cannyDetectedEdges, Size(3, 3));
-
-    // Запускаем наш оператор Canny
     Canny(g_cannyDetectedEdges, g_cannyDetectedEdges, lower_bound, upper_bound);
-
-    // Сначала устанавливаем все элементы в g_dstImage на 0
     g_dstImage = Scalar::all(0);
-
-    // Используем изображение края g_cannyDetectedEdges, выведенное оператором Canny, в качестве маски для копирования исходного изображения g_srcImage в целевое изображение g_dstImage
     g_srcImage.copyTo(g_dstImage, g_cannyDetectedEdges);
     imshow("Canny edge", g_dstImage);
 }
