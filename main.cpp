@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-
 #include <QApplication>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -9,7 +8,6 @@
 #include <iostream>
 #include <qdebug.h>
 #include <Windows.h>
-
 using namespace std;
 using namespace cv;
 int main(int argc, char *argv[])

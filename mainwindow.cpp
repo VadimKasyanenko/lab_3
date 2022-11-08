@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 }
 
+
 MainWindow::~MainWindow()
 {
     delete ui;
@@ -15,20 +16,28 @@ MainWindow::~MainWindow()
 // https://russianblogs.com/article/9236915207/
 // https://www.geeksforgeeks.org/python-thresholding-techniques-using-opencv-set-1-simple-thresholding/
 // https://docs.opencv.org/4.x/dc/dd3/tutorial_gausian_median_blur_bilateral_filter.html
-
 // (поиск линий) https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html
+
+
+
 void MainWindow::on_pushButton_clicked()
 {
+    QString str;
+    double Rho,Theta;
+    int threshold;
+    str = ui->lineEdit_13->text();
+    Rho =str.toDouble();
+    str = ui->lineEdit_14->text();
+    Theta =str.toDouble();
+    str = ui->lineEdit_15->text();
+    threshold =str.toDouble();
      Mat dst, cdst;
      Mat src = imread(path, IMREAD_GRAYSCALE );
-     // Edge detection
+     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
      Canny(src, dst, 50, 200, 3);
-     // Copy edges to the images that will display the results in BGR
      cvtColor(dst, cdst, COLOR_GRAY2BGR);
-     // Standard Hough Line Transform
-     vector<Vec2f> lines; // will hold the results of the detection
-     HoughLines(dst, lines, 1, CV_PI/180, 150, 0, 0 ); // runs the actual detection
-     // Draw the lines
+     vector<Vec2f> lines;
+     HoughLines(dst, lines, Rho,Theta,threshold);
      for( size_t i = 0; i < lines.size(); i++ )
      {
          float rho = lines[i][0], theta = lines[i][1];
@@ -41,56 +50,42 @@ void MainWindow::on_pushButton_clicked()
          pt2.y = cvRound(y0 - 1000*(a));
          line( cdst, pt1, pt2, Scalar(0,0,255), 3, LINE_AA);
      }
-     imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst);
+     imshow("Hough Line Transform", cdst);
 }
 // (поиск точек) https://docs.opencv.org/3.4/d2/d2c/tutorial_sobel_derivatives.html
 void MainWindow::on_pushButton_2_clicked()
 {
-
-    Point anchor( -1, -1 );
-      double delta = 0;
-      int ddepth = -1;
-      Mat dst;
-
-      float data[2][5] = {{11,11,11,11,11},{11,11,11,11,11}};
-      float kernel[2][2] = {{2,2},{2,2}};
-
-      Mat src = Mat(2, 5, CV_32FC1, &data);
-      Mat ker = Mat(2, 2, CV_32FC1, &kernel);
-      Mat img = imread(path, IMREAD_GRAYSCALE);
-      Mat res;
-      filter2D(img, dst, ddepth , ker,anchor);
-      filter2D(img, res, ddepth , ker,anchor,0,BORDER_DEFAULT);
-      cout << dst << endl;
-       imshow("Points", res);
-
-
-  /*   Mat image,src, src_gray;
-     Mat grad;
-     const String window_name = "Sobel Demo - Simple Edge Detector";
-     int ksize = 1; // размер ядра(нечет) ширина и высота фильтра до 31
-     int scale = 1; // масштабный коэффициент
-     int delta = 0; // смещение
-     int ddepth = CV_16S; // глубина входного изображения
-     // As usual we load our source image (src)
-     image = imread(path, IMREAD_COLOR ); // Load an image
-     for (;;)
-     {
-       // Remove noise by blurring with a Gaussian filter ( kernel size = 3 )
-       GaussianBlur(image, src, Size(3, 3), 0, 0, BORDER_DEFAULT);
-       // Convert the image to grayscale
-       cvtColor(src, src_gray, COLOR_BGR2GRAY);
-       Mat grad_x, grad_y;
-       Mat abs_grad_x, abs_grad_y;
-       Sobel(src_gray, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
-       Sobel(src_gray, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
-       // converting back to CV_8U
-       convertScaleAbs(grad_x, abs_grad_x);
-       convertScaleAbs(grad_y, abs_grad_y);
-       addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
-       imshow(window_name, grad);
-       char key = (char)waitKey(0);
-}*/
+    Mat src, src_gray;
+    int thresh,blockSize,apertureSize;
+    double k;
+    QString str;
+    str = ui->lineEdit_16->text();
+    thresh =str.toInt();
+    str = ui->lineEdit_17->text();
+    blockSize =str.toInt();
+    str = ui->lineEdit_19->text();
+    apertureSize =str.toInt();
+    str = ui->lineEdit_18->text();
+    k =str.toDouble();
+    src = imread( "D://Grant_DeVolson_Wood_-_American_Gothic.jpg" );
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
+    cvtColor( src, src_gray, COLOR_BGR2GRAY );
+    Mat dst = Mat::zeros( src.size(), CV_32FC1 );
+    cornerHarris( src_gray, dst, blockSize, apertureSize, k );
+    Mat dst_norm, dst_norm_scaled;
+    normalize( dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat() );
+    convertScaleAbs( dst_norm, dst_norm_scaled );
+    for( int i = 0; i < dst_norm.rows ; i++ )
+    {
+        for( int j = 0; j < dst_norm.cols; j++ )
+        {
+            if( (int) dst_norm.at<float>(i,j) > thresh )
+            {
+                circle( dst_norm_scaled, Point(j,i), 5,  Scalar(0), 2, 8, 0 );
+            }
+        }
+    }
+    imshow( "Points", dst_norm_scaled );
 }
 
 void MainWindow::on_pushButton_3_clicked()
@@ -103,21 +98,13 @@ void MainWindow::on_pushButton_3_clicked()
     upper_bound =str.toDouble();
     Mat g_srcImage, g_srcGrayImage, g_dstImage;
     Mat g_cannyDetectedEdges;
-    int g_cannyLowThreshold = 1;// TrackBar позиционный параметр
     g_srcImage = imread(path);
+    cv::resize(g_srcImage, g_srcImage, Size(1280, 720), INTER_LINEAR);
     g_dstImage.create(g_srcImage.size(), g_srcImage.type());
     cvtColor(g_srcImage, g_srcGrayImage, COLOR_BGRA2GRAY);
-
-    // Сначала используем ядро ​​3x3 для уменьшения шума
     blur(g_srcGrayImage, g_cannyDetectedEdges, Size(3, 3));
-
-    // Запускаем наш оператор Canny
     Canny(g_cannyDetectedEdges, g_cannyDetectedEdges, lower_bound, upper_bound);
-
-    // Сначала устанавливаем все элементы в g_dstImage на 0
     g_dstImage = Scalar::all(0);
-
-    // Используем изображение края g_cannyDetectedEdges, выведенное оператором Canny, в качестве маски для копирования исходного изображения g_srcImage в целевое изображение g_dstImage
     g_srcImage.copyTo(g_dstImage, g_cannyDetectedEdges);
     imshow("Canny edge", g_dstImage);
 }
@@ -140,6 +127,7 @@ void MainWindow::on_pushButton_4_clicked()
     Mat g_sobelGradient_X, g_sobelGradient_Y;
     Mat g_sobelAbsGradient_X, g_sobelAbsGradient_Y;
     g_srcImage = imread(path);
+    cv::resize(g_srcImage, g_srcImage, Size(1280, 720), INTER_LINEAR);
     g_dstImage.create(g_srcImage.size(), g_srcImage.type());
     cvtColor(g_srcImage, g_srcGrayImage, COLOR_BGRA2GRAY);
     Sobel(g_srcImage, g_sobelGradient_X, CV_16S, dx, 0,kernel_size, scale, delta, BORDER_DEFAULT);
@@ -180,6 +168,7 @@ void MainWindow::on_pushButton_5_clicked()
     Mat g_scharrGradient_X, g_scharrGradient_Y;
     Mat g_scharrAbsGradient_X, g_scharrAbsGradient_Y;
     g_srcImage = imread(path);
+    cv::resize(g_srcImage, g_srcImage, Size(1280, 720), INTER_LINEAR);
     g_dstImage.create(g_srcImage.size(), g_srcImage.type());
     cvtColor(g_srcImage, g_srcGrayImage, COLOR_BGRA2GRAY);
     Scharr(g_srcImage, g_scharrGradient_X, CV_16S, dx, 0, scale, delta, BORDER_DEFAULT);
@@ -214,6 +203,7 @@ void MainWindow::on_pushButton_6_clicked()
     z = str.toDouble();
     Mat img = imread(path,0);
     Mat src;
+    cv::resize(img, img, Size(1280, 720), INTER_LINEAR);
     medianBlur(img,src,5);
     Mat th;
     adaptiveThreshold(src,th,x,ADAPTIVE_THRESH_MEAN_C,\
@@ -229,10 +219,40 @@ void MainWindow::on_pushButton_7_clicked()
     x = str.toDouble();
     str = ui->lineEdit_2->text();
     y = str.toDouble();
-    Mat src = imread(path, IMREAD_GRAYSCALE);
+    Mat src = imread(path);
     Mat dst;
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_BINARY);
     imshow("Binary threshold", dst);
+    vector<Mat> bgr_planes;
+    split(dst, bgr_planes );
+    int histSize = 256;
+    float range[] = { 0, 256 }; //the upper boundary is exclusive
+    const float* histRange[] = { range };
+    bool uniform = true, accumulate = false;
+    Mat b_hist, g_hist, r_hist;
+    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/histSize );
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+    normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    for( int i = 1; i < histSize; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+              Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+              Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+              Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+    imshow("Binary hist", histImage );
 }
 
 void MainWindow::on_pushButton_11_clicked()
@@ -243,10 +263,40 @@ void MainWindow::on_pushButton_11_clicked()
     x = str.toDouble();
     str = ui->lineEdit_2->text();
     y = str.toDouble();
-    Mat src = imread(path, IMREAD_GRAYSCALE);
+    Mat src = imread(path);
     Mat dst;
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_BINARY_INV);
     imshow("Inverted binary threshold", dst);
+    vector<Mat> bgr_planes;
+    split(dst, bgr_planes );
+    int histSize = 256;
+    float range[] = { 0, 256 }; //the upper boundary is exclusive
+    const float* histRange[] = { range };
+    bool uniform = true, accumulate = false;
+    Mat b_hist, g_hist, r_hist;
+    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/histSize );
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+    normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    for( int i = 1; i < histSize; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+              Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+              Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+              Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+    imshow("Inverted binary hist", histImage );
 }
 
 void MainWindow::on_pushButton_10_clicked()
@@ -257,10 +307,40 @@ void MainWindow::on_pushButton_10_clicked()
     x = str.toDouble();
     str = ui->lineEdit_2->text();
     y = str.toDouble();
-    Mat src = imread(path, IMREAD_GRAYSCALE);
+    Mat src = imread(path);
     Mat dst;
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_TRUNC);
     imshow("Truncated threshold", dst);
+    vector<Mat> bgr_planes;
+    split(dst, bgr_planes );
+    int histSize = 256;
+    float range[] = { 0, 256 }; //the upper boundary is exclusive
+    const float* histRange[] = { range };
+    bool uniform = true, accumulate = false;
+    Mat b_hist, g_hist, r_hist;
+    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/histSize );
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+    normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    for( int i = 1; i < histSize; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+              Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+              Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+              Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+    imshow("Truncated hist", histImage );
 }
 
 void MainWindow::on_pushButton_8_clicked()
@@ -271,10 +351,40 @@ void MainWindow::on_pushButton_8_clicked()
     x = str.toDouble();
     str = ui->lineEdit_2->text();
     y = str.toDouble();
-    Mat src = imread(path, IMREAD_GRAYSCALE);
+    Mat src = imread(path);
     Mat dst;
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_TOZERO);
     imshow("To Zero threshold", dst);
+    vector<Mat> bgr_planes;
+    split(dst, bgr_planes );
+    int histSize = 256;
+    float range[] = { 0, 256 }; //the upper boundary is exclusive
+    const float* histRange[] = { range };
+    bool uniform = true, accumulate = false;
+    Mat b_hist, g_hist, r_hist;
+    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/histSize );
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+    normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    for( int i = 1; i < histSize; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+              Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+              Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+              Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+    imshow("To zero hist", histImage );
 }
 
 void MainWindow::on_pushButton_9_clicked()
@@ -285,10 +395,40 @@ void MainWindow::on_pushButton_9_clicked()
     x = str.toDouble();
     str = ui->lineEdit_2->text();
     y = str.toDouble();
-    Mat src = imread(path, IMREAD_GRAYSCALE);
+    Mat src = imread(path);
     Mat dst;
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_TOZERO_INV);
     imshow("To Zero inverted threshold", dst);
+    vector<Mat> bgr_planes;
+    split(dst, bgr_planes );
+    int histSize = 256;
+    float range[] = { 0, 256 }; //the upper boundary is exclusive
+    const float* histRange[] = { range };
+    bool uniform = true, accumulate = false;
+    Mat b_hist, g_hist, r_hist;
+    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/histSize );
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+    normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    for( int i = 1; i < histSize; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+              Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+              Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+              Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+    imshow("To zero inverted hist", histImage );
 }
 
 void MainWindow::on_pushButton_13_clicked()
@@ -299,10 +439,42 @@ void MainWindow::on_pushButton_13_clicked()
     x = str.toDouble();
     str = ui->lineEdit_2->text();
     y = str.toDouble();
-    Mat src = imread(path, IMREAD_GRAYSCALE);
+    Mat src = imread(path,IMREAD_GRAYSCALE);
     Mat dst;
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y,THRESH_BINARY+THRESH_OTSU);
     imshow("Threshold with Otsu", dst);
+    imwrite("tmp.jpg",dst);
+    Mat img = imread("tmp.jpg");
+    vector<Mat> bgr_planes;
+    split(img, bgr_planes );
+    int histSize = 256;
+    float range[] = { 0, 256 }; //the upper boundary is exclusive
+    const float* histRange[] = { range };
+    bool uniform = true, accumulate = false;
+    Mat b_hist, g_hist, r_hist;
+    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/histSize );
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+    normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    for( int i = 1; i < histSize; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+              Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+              Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+              Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+    imshow("Otsu hist", histImage );
 }
 
 void MainWindow::on_pushButton_14_clicked()
@@ -313,10 +485,42 @@ void MainWindow::on_pushButton_14_clicked()
     x = str.toDouble();
     str = ui->lineEdit_2->text();
     y = str.toDouble();
-    Mat src = imread(path, IMREAD_GRAYSCALE);
+    Mat src = imread(path,IMREAD_GRAYSCALE);
     Mat dst;
+    cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y,THRESH_BINARY+THRESH_TRIANGLE);
     imshow("Threshold with Triangle", dst);
+    imwrite("tmp.jpg",dst);
+    Mat img = imread("tmp.jpg");
+    vector<Mat> bgr_planes;
+    split(img, bgr_planes );
+    int histSize = 256;
+    float range[] = { 0, 256 }; //the upper boundary is exclusive
+    const float* histRange[] = { range };
+    bool uniform = true, accumulate = false;
+    Mat b_hist, g_hist, r_hist;
+    calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, histRange, uniform, accumulate );
+    calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/histSize );
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+    normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    for( int i = 1; i < histSize; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+              Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+              Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+              Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+              Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+    imshow("Triangle hist", histImage );
 }
 
 void MainWindow::on_pushButton_12_clicked()
@@ -333,6 +537,7 @@ void MainWindow::on_pushButton_12_clicked()
     z = str.toDouble();
     Mat img = imread(path,0);
     Mat src;
+    cv::resize(img, img, Size(1280, 720), INTER_LINEAR);
     medianBlur(img,src,5);
     Mat th;
     adaptiveThreshold(src,th,x,ADAPTIVE_THRESH_GAUSSIAN_C,\
@@ -348,7 +553,7 @@ void MainWindow::on_pushButton_15_clicked()
             this,
             tr("open a file."),
             "D:/",
-            tr("images(*jpg *gif *bmp *png *jpeg);;archive(*zip)"));
+            tr("images(*jpg *bmp *png *jpeg)"));
        path = fileName.toStdString();
        cout << path;
 }
@@ -356,5 +561,6 @@ void MainWindow::on_pushButton_15_clicked()
 void MainWindow::on_pushButton_16_clicked()
 {
     Mat img = imread(path);
+    cv::resize(img, img, Size(1280, 720), INTER_LINEAR);
     imshow("Original picture",img);
 }
