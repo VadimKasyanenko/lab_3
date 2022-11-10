@@ -67,7 +67,7 @@ void MainWindow::on_pushButton_2_clicked()
     apertureSize =str.toInt();
     str = ui->lineEdit_18->text();
     k =str.toDouble();
-    src = imread( "D://Grant_DeVolson_Wood_-_American_Gothic.jpg" );
+    src = imread( path );
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     cvtColor( src, src_gray, COLOR_BGR2GRAY );
     Mat dst = Mat::zeros( src.size(), CV_32FC1 );
