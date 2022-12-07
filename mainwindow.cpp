@@ -33,24 +33,15 @@ void MainWindow::on_pushButton_clicked()
     threshold =str.toDouble();
      Mat dst, cdst;
      Mat src = imread(path, IMREAD_GRAYSCALE );
+     if(src.empty()){
+         ui->label_25->setText("Please choose image!");
+             return;
+         }
      cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
      Canny(src, dst, 50, 200, 3);
-     cvtColor(dst, cdst, COLOR_GRAY2BGR);
      vector<Vec2f> lines;
      HoughLines(dst, lines, Rho,Theta,threshold);
-     for( size_t i = 0; i < lines.size(); i++ )
-     {
-         float rho = lines[i][0], theta = lines[i][1];
-         Point pt1, pt2;
-         double a = cos(theta), b = sin(theta);
-         double x0 = a*rho, y0 = b*rho;
-         pt1.x = cvRound(x0 + 1000*(-b));
-         pt1.y = cvRound(y0 + 1000*(a));
-         pt2.x = cvRound(x0 - 1000*(-b));
-         pt2.y = cvRound(y0 - 1000*(a));
-         line( cdst, pt1, pt2, Scalar(0,0,255), 3, LINE_AA);
-     }
-     imshow("Hough Line Transform", cdst);
+     imshow("Hough Line Transform", dst);
 }
 // (поиск точек) https://docs.opencv.org/3.4/d2/d2c/tutorial_sobel_derivatives.html
 void MainWindow::on_pushButton_2_clicked()
@@ -68,6 +59,10 @@ void MainWindow::on_pushButton_2_clicked()
     str = ui->lineEdit_18->text();
     k =str.toDouble();
     src = imread( path );
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     cvtColor( src, src_gray, COLOR_BGR2GRAY );
     Mat dst = Mat::zeros( src.size(), CV_32FC1 );
@@ -99,6 +94,10 @@ void MainWindow::on_pushButton_3_clicked()
     Mat g_srcImage, g_srcGrayImage, g_dstImage;
     Mat g_cannyDetectedEdges;
     g_srcImage = imread(path);
+    if(g_srcImage.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     cv::resize(g_srcImage, g_srcImage, Size(1280, 720), INTER_LINEAR);
     g_dstImage.create(g_srcImage.size(), g_srcImage.type());
     cvtColor(g_srcImage, g_srcGrayImage, COLOR_BGRA2GRAY);
@@ -127,6 +126,10 @@ void MainWindow::on_pushButton_4_clicked()
     Mat g_sobelGradient_X, g_sobelGradient_Y;
     Mat g_sobelAbsGradient_X, g_sobelAbsGradient_Y;
     g_srcImage = imread(path);
+    if(g_srcImage.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     cv::resize(g_srcImage, g_srcImage, Size(1280, 720), INTER_LINEAR);
     g_dstImage.create(g_srcImage.size(), g_srcImage.type());
     cvtColor(g_srcImage, g_srcGrayImage, COLOR_BGRA2GRAY);
@@ -168,6 +171,10 @@ void MainWindow::on_pushButton_5_clicked()
     Mat g_scharrGradient_X, g_scharrGradient_Y;
     Mat g_scharrAbsGradient_X, g_scharrAbsGradient_Y;
     g_srcImage = imread(path);
+    if(g_srcImage.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     cv::resize(g_srcImage, g_srcImage, Size(1280, 720), INTER_LINEAR);
     g_dstImage.create(g_srcImage.size(), g_srcImage.type());
     cvtColor(g_srcImage, g_srcGrayImage, COLOR_BGRA2GRAY);
@@ -202,6 +209,10 @@ void MainWindow::on_pushButton_6_clicked()
     str = ui->lineEdit_5->text();
     z = str.toDouble();
     Mat img = imread(path,0);
+    if(img.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat src;
     cv::resize(img, img, Size(1280, 720), INTER_LINEAR);
     medianBlur(img,src,5);
@@ -220,6 +231,10 @@ void MainWindow::on_pushButton_7_clicked()
     str = ui->lineEdit_2->text();
     y = str.toDouble();
     Mat src = imread(path);
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat dst;
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_BINARY);
@@ -264,6 +279,10 @@ void MainWindow::on_pushButton_11_clicked()
     str = ui->lineEdit_2->text();
     y = str.toDouble();
     Mat src = imread(path);
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat dst;
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_BINARY_INV);
@@ -308,6 +327,10 @@ void MainWindow::on_pushButton_10_clicked()
     str = ui->lineEdit_2->text();
     y = str.toDouble();
     Mat src = imread(path);
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat dst;
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_TRUNC);
@@ -352,6 +375,10 @@ void MainWindow::on_pushButton_8_clicked()
     str = ui->lineEdit_2->text();
     y = str.toDouble();
     Mat src = imread(path);
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat dst;
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_TOZERO);
@@ -396,6 +423,10 @@ void MainWindow::on_pushButton_9_clicked()
     str = ui->lineEdit_2->text();
     y = str.toDouble();
     Mat src = imread(path);
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat dst;
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y, THRESH_TOZERO_INV);
@@ -440,6 +471,10 @@ void MainWindow::on_pushButton_13_clicked()
     str = ui->lineEdit_2->text();
     y = str.toDouble();
     Mat src = imread(path,IMREAD_GRAYSCALE);
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat dst;
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y,THRESH_BINARY+THRESH_OTSU);
@@ -486,6 +521,10 @@ void MainWindow::on_pushButton_14_clicked()
     str = ui->lineEdit_2->text();
     y = str.toDouble();
     Mat src = imread(path,IMREAD_GRAYSCALE);
+    if(src.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat dst;
     cv::resize(src, src, Size(1280, 720), INTER_LINEAR);
     threshold(src,dst,x,y,THRESH_BINARY+THRESH_TRIANGLE);
@@ -536,31 +575,39 @@ void MainWindow::on_pushButton_12_clicked()
     str = ui->lineEdit_5->text();
     z = str.toDouble();
     Mat img = imread(path,0);
+    if(img.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     Mat src;
     cv::resize(img, img, Size(1280, 720), INTER_LINEAR);
-    medianBlur(img,src,5);
+   // medianBlur(img,src,5);
     Mat th;
-    adaptiveThreshold(src,th,x,ADAPTIVE_THRESH_GAUSSIAN_C,\
+    adaptiveThreshold(img,th,x,ADAPTIVE_THRESH_GAUSSIAN_C,\
                 THRESH_BINARY,y,z);
     imshow("Adaptive Gaussian threshold",th);
 }
 
 void MainWindow::on_pushButton_15_clicked()
 {
-    QString arr[]={".jpg",".gif",".bmp",".png",".jpeg"};
+    QString arr[]={".tiff",".gif",".bmp",".png",".jpeg"};
     QString arch;
          QString fileName = QFileDialog ::getOpenFileName(
             this,
             tr("open a file."),
             "D:/",
-            tr("images(*jpg *bmp *png *jpeg)"));
+            tr("images(*tiff *bmp *png *jpeg *jpg)"));
        path = fileName.toStdString();
-       cout << path;
+        ui->label_25->setText("");
 }
 
 void MainWindow::on_pushButton_16_clicked()
 {
-    Mat img = imread(path);
+    Mat img = imread(path, COLOR_BGR2RGB);
+    if(img.empty()){
+        ui->label_25->setText("Please choose image!");
+            return;
+        }
     cv::resize(img, img, Size(1280, 720), INTER_LINEAR);
     imshow("Original picture",img);
 }
